@@ -2,7 +2,7 @@
 
 A full-stack expense-splitting app (a Splitwise clone) built with React, Node.js/Express, and PostgreSQL. Create groups, log shared expenses, and instantly see who owes whom — settled with a debt-simplification algorithm that minimizes the number of transactions needed to settle up.
 
-**Live demo:** [https://splitwise-clone-cyan.vercel.app/](#) *(replace with your actual Vercel URL)*
+**Live demo:** [https://splitwise-clone-cyan.vercel.app/](#) 
 
 
 > Note: the backend is hosted on Render's free tier, which spins down after periods of inactivity. The first request after idle time may take 30–50 seconds to respond while the server wakes up.
