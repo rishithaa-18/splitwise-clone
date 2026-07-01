@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://splitwise-clone-l0br.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 // Attach JWT token to every request automatically
