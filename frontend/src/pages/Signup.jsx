@@ -14,7 +14,6 @@ function Signup() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const res = await api.post('/auth/signup', { name, email, password });
       localStorage.setItem('token', res.data.token);
@@ -28,60 +27,71 @@ function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm">
-        <h1 className="text-2xl font-bold mb-6 text-center">Sign Up</h1>
+    <div className="min-h-screen bg-paper font-body flex items-center justify-center px-6">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <p className="text-xs uppercase tracking-widest text-ink/50 mb-1">Ledger</p>
+          <h1 className="font-display text-3xl font-semibold text-ink">Create an account</h1>
+        </div>
 
-        {error && (
-          <div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-4">
-            {error}
-          </div>
-        )}
+        <div className="bg-white border border-line rounded-sm p-6">
+          {error && (
+            <div className="border border-owed/30 bg-owed/5 text-owed text-sm px-3 py-2 rounded-sm mb-4">
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Creating account...' : 'Sign Up'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-ink/50 font-medium mb-1.5">
+                Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-ink/50 font-medium mb-1.5">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent"
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-ink/50 font-medium mb-1.5">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-ink text-paper py-2.5 rounded-sm text-sm font-medium hover:bg-ink/90 disabled:opacity-40 transition-colors"
+            >
+              {loading ? 'Creating account…' : 'Sign Up'}
+            </button>
+          </form>
+        </div>
 
-        <p className="text-sm text-center mt-4">
+        <p className="text-sm text-center mt-5 text-ink/60">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-accent font-medium hover:underline">
             Log in
           </Link>
         </p>

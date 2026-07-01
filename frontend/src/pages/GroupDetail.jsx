@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
 function GroupDetail() {
@@ -45,7 +45,6 @@ function GroupDetail() {
     if (!description.trim() || !amount) return;
     setAddLoading(true);
     setAddError('');
-
     try {
       await api.post('/expenses/add', {
         groupId: Number(groupId),
@@ -54,7 +53,7 @@ function GroupDetail() {
       });
       setDescription('');
       setAmount('');
-      fetchAll(); // refresh expenses + balances together
+      fetchAll();
     } catch (err) {
       setAddError(err.response?.data?.error || 'Failed to add expense');
     } finally {
@@ -65,111 +64,126 @@ function GroupDetail() {
   const formatCurrency = (num) => `₹${Math.abs(num).toFixed(2)}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto">
-        <button
-          onClick={() => navigate('/groups')}
-          className="text-sm text-blue-600 hover:underline mb-4"
-        >
-          ← Back to groups
-        </button>
+    <div className="min-h-screen bg-paper font-body">
+      <header className="border-b border-line px-6 py-4">
+        <div className="max-w-2xl mx-auto">
+          <button
+            onClick={() => navigate('/groups')}
+            className="text-sm text-ink/50 hover:text-ink transition-colors"
+          >
+            ← Back
+          </button>
+        </div>
+      </header>
 
-        {loading && <p className="text-gray-500 text-sm">Loading...</p>}
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+      <main className="max-w-2xl mx-auto px-6 py-8">
+        {loading && <p className="text-ink/40 text-sm">Loading…</p>}
+        {error && <p className="text-owed text-sm">{error}</p>}
 
         {!loading && !error && (
           <>
-            {/* Add expense form */}
-            <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-              <h2 className="text-lg font-semibold mb-3">Add an expense</h2>
+            {/* Add expense */}
+            <div className="bg-white border border-line rounded-sm p-4 mb-6">
+              <h2 className="text-xs uppercase tracking-wide text-ink/50 font-medium mb-3">
+                Log an expense
+              </h2>
               <form onSubmit={handleAddExpense} className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
-                  placeholder="Description (e.g. Dinner)"
+                  placeholder="What was it for?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="flex-1 border rounded px-3 py-2 text-sm"
+                  className="flex-1 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent"
                 />
                 <input
                   type="number"
-                  placeholder="Amount"
+                  placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   min="0.01"
                   step="0.01"
-                  className="sm:w-32 border rounded px-3 py-2 text-sm"
+                  className="sm:w-28 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent font-mono"
                 />
                 <button
                   type="submit"
                   disabled={addLoading}
-                  className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                  className="bg-ink text-paper px-4 py-2 rounded-sm text-sm font-medium hover:bg-ink/90 disabled:opacity-40 transition-colors"
                 >
-                  {addLoading ? 'Adding...' : 'Add'}
+                  {addLoading ? 'Adding…' : 'Add'}
                 </button>
               </form>
-              {addError && <p className="text-red-600 text-xs mt-2">{addError}</p>}
-              <p className="text-xs text-gray-400 mt-2">
-                Split equally among all current group members. You're recorded as the payer.
-              </p>
+              {addError && <p className="text-owed text-xs mt-2">{addError}</p>}
+              <p className="text-xs text-ink/35 mt-2">Split equally among everyone in the group. You're the payer.</p>
             </div>
 
-            {/* Balances */}
-            <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-              <h2 className="text-lg font-semibold mb-3">Balances</h2>
-              <div className="space-y-1 mb-4">
+            {/* Balances — the signature ledger element */}
+            <div className="bg-white border border-line rounded-sm p-5 mb-6">
+              <h2 className="font-display text-lg font-semibold text-ink mb-4">Balances</h2>
+              <div className="divide-y divide-line/70">
                 {balances.map((b) => (
-                  <div key={b.userId} className="flex justify-between text-sm">
-                    <span className={b.userId === currentUser.id ? 'font-semibold' : ''}>
-                      {b.name} {b.userId === currentUser.id && '(you)'}
+                  <div key={b.userId} className="flex justify-between items-baseline py-2 first:pt-0 last:pb-0">
+                    <span className="text-sm text-ink">
+                      {b.name} {b.userId === currentUser.id && <span className="text-ink/40">(you)</span>}
                     </span>
                     <span
-                      className={
+                      className={`font-mono text-sm font-medium ${
                         b.netBalance > 0
-                          ? 'text-green-600'
+                          ? 'text-settled'
                           : b.netBalance < 0
-                          ? 'text-red-600'
-                          : 'text-gray-400'
-                      }
+                          ? 'text-owed'
+                          : 'text-ink/30'
+                      }`}
                     >
-                      {b.netBalance > 0 && `gets back ${formatCurrency(b.netBalance)}`}
-                      {b.netBalance < 0 && `owes ${formatCurrency(b.netBalance)}`}
-                      {b.netBalance === 0 && 'settled up'}
+                      {b.netBalance > 0 && `+${formatCurrency(b.netBalance)}`}
+                      {b.netBalance < 0 && `−${formatCurrency(b.netBalance)}`}
+                      {b.netBalance === 0 && '—'}
                     </span>
                   </div>
                 ))}
               </div>
 
-              <h3 className="text-sm font-semibold mb-2 text-gray-700">Suggested settlements</h3>
-              {settlements.length === 0 ? (
-                <p className="text-sm text-gray-400">Everyone's settled up 🎉</p>
-              ) : (
-                <div className="space-y-1">
-                  {settlements.map((s, idx) => (
-                    <div key={idx} className="text-sm bg-gray-50 rounded px-3 py-2">
-                      <span className="font-medium">{s.from.name}</span> pays{' '}
-                      <span className="font-medium">{s.to.name}</span>{' '}
-                      <span className="text-blue-600 font-semibold">{formatCurrency(s.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="border-t border-dashed border-line mt-4 pt-4">
+                <p className="text-xs uppercase tracking-wide text-ink/50 font-medium mb-3">
+                  Settle up
+                </p>
+                {settlements.length === 0 ? (
+                  <p className="text-sm text-settled">Everyone's settled up.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {settlements.map((s, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-sm">
+                        <span>
+                          <span className="font-medium text-ink">{s.from.name}</span>
+                          <span className="text-ink/40"> → </span>
+                          <span className="font-medium text-ink">{s.to.name}</span>
+                        </span>
+                        <span className="font-mono font-semibold text-accent">
+                          {formatCurrency(s.amount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Expense list */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <h2 className="text-lg font-semibold mb-3">Expenses</h2>
+            <div className="bg-white border border-line rounded-sm p-5">
+              <h2 className="font-display text-lg font-semibold text-ink mb-4">Expenses</h2>
               {expenses.length === 0 ? (
-                <p className="text-sm text-gray-400">No expenses yet.</p>
+                <p className="text-sm text-ink/40">Nothing logged yet.</p>
               ) : (
-                <div className="space-y-3">
+                <div className="divide-y divide-line/70">
                   {expenses.map((exp) => (
-                    <div key={exp.id} className="border-b pb-2 last:border-b-0">
-                      <div className="flex justify-between items-center">
-                        <p className="font-medium text-sm">{exp.description}</p>
-                        <p className="text-sm font-semibold">{formatCurrency(exp.amount)}</p>
+                    <div key={exp.id} className="py-3 first:pt-0 last:pb-0 flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-ink font-medium">{exp.description}</p>
+                        <p className="text-xs text-ink/40 mt-0.5">
+                          {exp.paidBy.name} · split {exp.shares.length} ways
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        Paid by {exp.paidBy.name} · split among {exp.shares.length}
+                      <p className="font-mono text-sm font-medium text-ink">
+                        {formatCurrency(exp.amount)}
                       </p>
                     </div>
                   ))}
@@ -178,7 +192,7 @@ function GroupDetail() {
             </div>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

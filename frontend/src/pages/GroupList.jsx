@@ -35,7 +35,6 @@ function GroupList() {
     if (!newGroupName.trim()) return;
     setActionLoading(true);
     setActionError('');
-
     try {
       await api.post('/groups/create', { name: newGroupName.trim() });
       setNewGroupName('');
@@ -52,7 +51,6 @@ function GroupList() {
     if (!joinCode.trim()) return;
     setActionLoading(true);
     setActionError('');
-
     try {
       await api.post('/groups/join', { inviteCode: joinCode.trim() });
       setJoinCode('');
@@ -71,54 +69,64 @@ function GroupList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Hi, {user.name || 'there'} 👋</h1>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-gray-500 hover:text-red-600"
-          >
-            Log out
-          </button>
+    <div className="min-h-screen bg-paper font-body">
+      {/* Header */}
+      <header className="border-b border-line px-6 py-5 flex justify-between items-center">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-ink/50">Ledger</p>
+          <h1 className="font-display text-2xl font-semibold text-ink">
+            Hi, {user.name || 'there'}
+          </h1>
         </div>
+        <button
+          onClick={handleLogout}
+          className="text-sm text-ink/50 hover:text-owed transition-colors"
+        >
+          Log out
+        </button>
+      </header>
 
-        {/* Create / Join forms */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <form onSubmit={handleCreateGroup} className="bg-white p-4 rounded-lg shadow-sm">
-            <label className="block text-sm font-medium mb-2">Create a group</label>
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        {/* Create / Join */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+          <form onSubmit={handleCreateGroup} className="bg-white border border-line rounded-xl p-6 shadow-sm">
+            <label className="block text-xs uppercase tracking-wide text-ink/50 mb-2 font-medium">
+              Start a new ledger
+            </label>
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Group name"
+                placeholder="e.g. Goa Trip"
                 value={newGroupName}
                 onChange={(e) => setNewGroupName(e.target.value)}
-                className="flex-1 border rounded px-3 py-2 text-sm"
+                className="flex-1 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent"
               />
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="bg-ink text-paper px-4 py-2 rounded-sm text-sm font-medium hover:bg-ink/90 disabled:opacity-40 transition-colors"
               >
                 Create
               </button>
             </div>
           </form>
 
-          <form onSubmit={handleJoinGroup} className="bg-white p-4 rounded-lg shadow-sm">
-            <label className="block text-sm font-medium mb-2">Join with invite code</label>
+          <form onSubmit={handleJoinGroup} className="bg-white border border-line rounded-sm p-4">
+            <label className="block text-xs uppercase tracking-wide text-ink/50 mb-2 font-medium">
+              Join with a code
+            </label>
             <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="Invite code"
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value)}
-                className="flex-1 border rounded px-3 py-2 text-sm"
+                className="flex-1 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent font-mono"
               />
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                className="bg-accent text-white px-4 py-2 rounded-sm text-sm font-medium hover:bg-accent/90 disabled:opacity-40 transition-colors"
               >
                 Join
               </button>
@@ -127,18 +135,21 @@ function GroupList() {
         </div>
 
         {actionError && (
-          <div className="bg-red-100 text-red-700 text-sm p-2 rounded mb-4">
+          <div className="border border-owed/30 bg-owed/5 text-owed text-sm px-3 py-2 rounded-sm mb-6">
             {actionError}
           </div>
         )}
 
         {/* Group list */}
-        <h2 className="text-lg font-semibold mb-3">Your Groups</h2>
+        <h2 className="font-display text-lg font-semibold text-ink mb-3">Your Groups</h2>
 
-        {loading && <p className="text-gray-500 text-sm">Loading groups...</p>}
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {loading && <p className="text-ink/40 text-sm">Loading groups…</p>}
+        {error && <p className="text-owed text-sm">{error}</p>}
         {!loading && groups.length === 0 && (
-          <p className="text-gray-500 text-sm">No groups yet — create or join one above.</p>
+          <div className="border border-dashed border-line rounded-sm p-8 text-center">
+            <p className="text-ink/50 text-sm">No groups yet.</p>
+            <p className="text-ink/40 text-xs mt-1">Create one above, or join a friend's with their invite code.</p>
+          </div>
         )}
 
         <div className="space-y-2">
@@ -146,19 +157,20 @@ function GroupList() {
             <div
               key={group.id}
               onClick={() => navigate(`/groups/${group.id}`)}
-              className="bg-white p-4 rounded-lg shadow-sm cursor-pointer hover:shadow-md transition flex justify-between items-center"
+              className="group bg-white border border-line rounded-sm px-4 py-3 cursor-pointer hover:border-ink/30 transition-colors flex justify-between items-center"
             >
               <div>
-                <p className="font-medium">{group.name}</p>
-                <p className="text-xs text-gray-500">
-                  {group.memberCount} member{group.memberCount !== 1 ? 's' : ''} · Code: {group.inviteCode}
+                <p className="font-display font-semibold text-ink">{group.name}</p>
+                <p className="text-xs text-ink/40 mt-0.5">
+                  {group.memberCount} member{group.memberCount !== 1 ? 's' : ''} ·{' '}
+                  <span className="font-mono">{group.inviteCode}</span>
                 </p>
               </div>
-              <span className="text-gray-400">→</span>
+              <span className="text-ink/30 group-hover:text-ink/60 group-hover:translate-x-0.5 transition-all">→</span>
             </div>
           ))}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
