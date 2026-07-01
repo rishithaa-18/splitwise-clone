@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus, TrendingUp, TrendingDown, Wallet, ChevronRight } from 'lucide-react';
 import api from '../api/axios';
 
 function GroupList() {
   const [groups, setGroups] = useState([]);
+  const [recentExpenses, setRecentExpenses] = useState([]);
+  const [totals, setTotals] = useState({ owedToYou: 0, youOwe: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -15,19 +18,49 @@ function GroupList() {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const fetchGroups = async () => {
+  const fetchDashboard = async () => {
+    setLoading(true);
     try {
-      const res = await api.get('/groups/my-groups');
-      setGroups(res.data.groups);
+      const groupsRes = await api.get('/groups/my-groups');
+      const groupList = groupsRes.data.groups;
+      setGroups(groupList);
+
+      if (groupList.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      const [balancesResults, expensesResults] = await Promise.all([
+        Promise.all(groupList.map((g) => api.get(`/settlements/group/${g.id}`))),
+        Promise.all(groupList.map((g) => api.get(`/expenses/group/${g.id}`))),
+      ]);
+
+      let owedToYou = 0;
+      let youOwe = 0;
+      balancesResults.forEach((res) => {
+        const mine = res.data.balances.find((b) => b.userId === user.id);
+        if (mine) {
+          if (mine.netBalance > 0) owedToYou += mine.netBalance;
+          else youOwe += Math.abs(mine.netBalance);
+        }
+      });
+      setTotals({ owedToYou, youOwe });
+
+      const allExpenses = expensesResults.flatMap((res, idx) =>
+        res.data.expenses.map((e) => ({ ...e, groupName: groupList[idx].name, groupId: groupList[idx].id }))
+      );
+      allExpenses.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setRecentExpenses(allExpenses.slice(0, 5));
     } catch (err) {
-      setError('Failed to load groups');
+      setError('Failed to load dashboard');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGroups();
+    fetchDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateGroup = async (e) => {
@@ -38,7 +71,7 @@ function GroupList() {
     try {
       await api.post('/groups/create', { name: newGroupName.trim() });
       setNewGroupName('');
-      fetchGroups();
+      fetchDashboard();
     } catch (err) {
       setActionError(err.response?.data?.error || 'Failed to create group');
     } finally {
@@ -54,7 +87,7 @@ function GroupList() {
     try {
       await api.post('/groups/join', { inviteCode: joinCode.trim() });
       setJoinCode('');
-      fetchGroups();
+      fetchDashboard();
     } catch (err) {
       setActionError(err.response?.data?.error || 'Failed to join group');
     } finally {
@@ -62,115 +95,152 @@ function GroupList() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
+  const formatCurrency = (num) => `₹${num.toFixed(2)}`;
+  const netTotal = totals.owedToYou - totals.youOwe;
 
   return (
-    <div className="min-h-screen bg-paper font-body">
-      {/* Header */}
-      <header className="border-b border-line px-6 py-5 flex justify-between items-center">
-        <div>
-          <p className="text-xs uppercase tracking-widest text-ink/50">Ledger</p>
-          <h1 className="font-display text-2xl font-semibold text-ink">
-            Hi, {user.name || 'there'}
-          </h1>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-ink/50 hover:text-owed transition-colors"
-        >
-          Log out
-        </button>
-      </header>
+    <div className="p-8 max-w-5xl">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-ink">Welcome back, {user.name}!</h1>
+        <p className="text-sm text-muted mt-0.5">Here's what's happening with your ledger today.</p>
+      </div>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        {/* Create / Join */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-          <form onSubmit={handleCreateGroup} className="bg-white border border-line rounded-xl p-6 shadow-sm">
-            <label className="block text-xs uppercase tracking-wide text-ink/50 mb-2 font-medium">
-              Start a new ledger
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="e.g. Goa Trip"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                className="flex-1 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent"
-              />
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="bg-ink text-paper px-4 py-2 rounded-sm text-sm font-medium hover:bg-ink/90 disabled:opacity-40 transition-colors"
-              >
-                Create
-              </button>
-            </div>
-          </form>
+      {loading && <p className="text-sm text-muted">Loading dashboard…</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
-          <form onSubmit={handleJoinGroup} className="bg-white border border-line rounded-sm p-4">
-            <label className="block text-xs uppercase tracking-wide text-ink/50 mb-2 font-medium">
-              Join with a code
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Invite code"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                className="flex-1 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent font-mono"
-              />
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="bg-accent text-white px-4 py-2 rounded-sm text-sm font-medium hover:bg-accent/90 disabled:opacity-40 transition-colors"
-              >
-                Join
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {actionError && (
-          <div className="border border-owed/30 bg-owed/5 text-owed text-sm px-3 py-2 rounded-sm mb-6">
-            {actionError}
-          </div>
-        )}
-
-        {/* Group list */}
-        <h2 className="font-display text-lg font-semibold text-ink mb-3">Your Groups</h2>
-
-        {loading && <p className="text-ink/40 text-sm">Loading groups…</p>}
-        {error && <p className="text-owed text-sm">{error}</p>}
-        {!loading && groups.length === 0 && (
-          <div className="border border-dashed border-line rounded-sm p-8 text-center">
-            <p className="text-ink/50 text-sm">No groups yet.</p>
-            <p className="text-ink/40 text-xs mt-1">Create one above, or join a friend's with their invite code.</p>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          {groups.map((group) => (
-            <div
-              key={group.id}
-              onClick={() => navigate(`/groups/${group.id}`)}
-              className="group bg-white border border-line rounded-sm px-4 py-3 cursor-pointer hover:border-ink/30 transition-colors flex justify-between items-center"
-            >
-              <div>
-                <p className="font-display font-semibold text-ink">{group.name}</p>
-                <p className="text-xs text-ink/40 mt-0.5">
-                  {group.memberCount} member{group.memberCount !== 1 ? 's' : ''} ·{' '}
-                  <span className="font-mono">{group.inviteCode}</span>
-                </p>
+      {!loading && !error && (
+        <>
+          {/* Stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="bg-brand rounded-xl p-5 text-white">
+              <div className="flex items-center gap-2 text-white/80 text-xs font-medium mb-2">
+                <Wallet size={14} /> Net Balance
               </div>
-              <span className="text-ink/30 group-hover:text-ink/60 group-hover:translate-x-0.5 transition-all">→</span>
+              <p className="text-2xl font-bold">
+                {netTotal >= 0 ? '+' : '−'}{formatCurrency(Math.abs(netTotal))}
+              </p>
             </div>
-          ))}
-        </div>
-      </main>
+
+            <div className="bg-white rounded-xl p-5 border border-line">
+              <div className="flex items-center gap-2 text-muted text-xs font-medium mb-2">
+                <TrendingUp size={14} className="text-brand" /> You are owed
+              </div>
+              <p className="text-2xl font-bold text-brand">{formatCurrency(totals.owedToYou)}</p>
+            </div>
+
+            <div className="bg-white rounded-xl p-5 border border-line">
+              <div className="flex items-center gap-2 text-muted text-xs font-medium mb-2">
+                <TrendingDown size={14} className="text-danger" /> You owe
+              </div>
+              <p className="text-2xl font-bold text-danger">{formatCurrency(totals.youOwe)}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left: recent activity + groups */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-xl border border-line p-5">
+                <h2 className="text-sm font-semibold text-ink mb-4">Recent Activity</h2>
+                {recentExpenses.length === 0 ? (
+                  <p className="text-sm text-muted">No expenses logged yet.</p>
+                ) : (
+                  <div className="divide-y divide-line">
+                    {recentExpenses.map((exp) => (
+                      <div
+                        key={exp.id}
+                        onClick={() => navigate(`/groups/${exp.groupId}`)}
+                        className="py-3 first:pt-0 last:pb-0 flex justify-between items-center cursor-pointer"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-ink">{exp.description}</p>
+                          <p className="text-xs text-muted mt-0.5">
+                            {exp.groupName} · {new Date(exp.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <p className="text-sm font-mono font-medium text-ink">
+                          {formatCurrency(exp.amount)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white rounded-xl border border-line p-5">
+                <h2 className="text-sm font-semibold text-ink mb-4">Your Groups</h2>
+                {groups.length === 0 ? (
+                  <p className="text-sm text-muted">No groups yet — create or join one to get started.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {groups.map((group) => (
+                      <div
+                        key={group.id}
+                        onClick={() => navigate(`/groups/${group.id}`)}
+                        className="flex justify-between items-center px-3 py-3 rounded-lg hover:bg-surface cursor-pointer transition-colors"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-ink">{group.name}</p>
+                          <p className="text-xs text-muted mt-0.5">
+                            {group.memberCount} member{group.memberCount !== 1 ? 's' : ''} ·{' '}
+                            <span className="font-mono">{group.inviteCode}</span>
+                          </p>
+                        </div>
+                        <ChevronRight size={16} className="text-muted" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: create/join */}
+            <div className="space-y-6">
+              <div className="bg-white rounded-xl border border-line p-5">
+                <h2 className="text-sm font-semibold text-ink mb-3 flex items-center gap-1.5">
+                  <Plus size={16} /> New Group
+                </h2>
+                <form onSubmit={handleCreateGroup} className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Group name"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    className="w-full border border-line rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand"
+                  />
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="w-full bg-brand text-white py-2 rounded-lg text-sm font-medium hover:bg-brand-dark disabled:opacity-40 transition-colors"
+                  >
+                    Create
+                  </button>
+                </form>
+              </div>
+
+              <div className="bg-white rounded-xl border border-line p-5">
+                <h2 className="text-sm font-semibold text-ink mb-3">Join a Group</h2>
+                <form onSubmit={handleJoinGroup} className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Invite code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    className="w-full border border-line rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-brand"
+                  />
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="w-full bg-ink text-white py-2 rounded-lg text-sm font-medium hover:bg-ink/90 disabled:opacity-40 transition-colors"
+                  >
+                    Join
+                  </button>
+                </form>
+                {actionError && <p className="text-danger text-xs mt-2">{actionError}</p>}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

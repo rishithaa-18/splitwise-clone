@@ -4,15 +4,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        paper: '#FAF7F0',
-        ink: '#24272B',
-        line: '#E4DED0',
-        settled: '#2F6F4E',
-        owed: '#B23A48',
-        accent: '#D98E3A',
+        brand: { DEFAULT: '#0F9D6E', dark: '#0B7C58', light: '#E6F6EF' },
+        ink: '#1F2937',
+        muted: '#6B7280',
+        surface: '#F6F7F9',
+        line: '#E7E9EC',
+        danger: '#DC2626',
       },
       fontFamily: {
-        display: ['Fraunces', 'serif'],
         body: ['Inter', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
       },

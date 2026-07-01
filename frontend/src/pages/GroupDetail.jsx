@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus } from 'lucide-react';
 import api from '../api/axios';
 
 function GroupDetail() {
@@ -64,74 +65,65 @@ function GroupDetail() {
   const formatCurrency = (num) => `₹${Math.abs(num).toFixed(2)}`;
 
   return (
-    <div className="min-h-screen bg-paper font-body">
-      <header className="border-b border-line px-6 py-4">
-        <div className="max-w-2xl mx-auto">
-          <button
-            onClick={() => navigate('/groups')}
-            className="text-sm text-ink/50 hover:text-ink transition-colors"
-          >
-            ← Back
-          </button>
-        </div>
-      </header>
+    <div className="p-8 max-w-4xl">
+      <button
+        onClick={() => navigate('/groups')}
+        className="flex items-center gap-1.5 text-sm text-muted hover:text-ink transition-colors mb-5"
+      >
+        <ArrowLeft size={15} /> Back to dashboard
+      </button>
 
-      <main className="max-w-2xl mx-auto px-6 py-8">
-        {loading && <p className="text-ink/40 text-sm">Loading…</p>}
-        {error && <p className="text-owed text-sm">{error}</p>}
+      {loading && <p className="text-sm text-muted">Loading…</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
-        {!loading && !error && (
-          <>
-            {/* Add expense */}
-            <div className="bg-white border border-line rounded-sm p-4 mb-6">
-              <h2 className="text-xs uppercase tracking-wide text-ink/50 font-medium mb-3">
-                Log an expense
-              </h2>
-              <form onSubmit={handleAddExpense} className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  placeholder="What was it for?"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="flex-1 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent"
-                />
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min="0.01"
-                  step="0.01"
-                  className="sm:w-28 border border-line rounded-sm px-3 py-2 text-sm bg-paper focus:outline-none focus:border-accent font-mono"
-                />
-                <button
-                  type="submit"
-                  disabled={addLoading}
-                  className="bg-ink text-paper px-4 py-2 rounded-sm text-sm font-medium hover:bg-ink/90 disabled:opacity-40 transition-colors"
-                >
-                  {addLoading ? 'Adding…' : 'Add'}
-                </button>
-              </form>
-              {addError && <p className="text-owed text-xs mt-2">{addError}</p>}
-              <p className="text-xs text-ink/35 mt-2">Split equally among everyone in the group. You're the payer.</p>
-            </div>
+      {!loading && !error && (
+        <>
+          {/* Add expense */}
+          <div className="bg-white rounded-xl border border-line p-5 mb-6">
+            <h2 className="text-sm font-semibold text-ink mb-3 flex items-center gap-1.5">
+              <Plus size={16} /> Log an expense
+            </h2>
+            <form onSubmit={handleAddExpense} className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                placeholder="What was it for?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="flex-1 border border-line rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand"
+              />
+              <input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                min="0.01"
+                step="0.01"
+                className="sm:w-28 border border-line rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-brand"
+              />
+              <button
+                type="submit"
+                disabled={addLoading}
+                className="bg-brand text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-dark disabled:opacity-40 transition-colors"
+              >
+                {addLoading ? 'Adding…' : 'Add'}
+              </button>
+            </form>
+            {addError && <p className="text-danger text-xs mt-2">{addError}</p>}
+          </div>
 
-            {/* Balances — the signature ledger element */}
-            <div className="bg-white border border-line rounded-sm p-5 mb-6">
-              <h2 className="font-display text-lg font-semibold text-ink mb-4">Balances</h2>
-              <div className="divide-y divide-line/70">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Balances */}
+            <div className="bg-white rounded-xl border border-line p-5">
+              <h2 className="text-sm font-semibold text-ink mb-4">Balances</h2>
+              <div className="divide-y divide-line">
                 {balances.map((b) => (
                   <div key={b.userId} className="flex justify-between items-baseline py-2 first:pt-0 last:pb-0">
                     <span className="text-sm text-ink">
-                      {b.name} {b.userId === currentUser.id && <span className="text-ink/40">(you)</span>}
+                      {b.name} {b.userId === currentUser.id && <span className="text-muted">(you)</span>}
                     </span>
                     <span
-                      className={`font-mono text-sm font-medium ${
-                        b.netBalance > 0
-                          ? 'text-settled'
-                          : b.netBalance < 0
-                          ? 'text-owed'
-                          : 'text-ink/30'
+                      className={`font-mono text-sm font-semibold ${
+                        b.netBalance > 0 ? 'text-brand' : b.netBalance < 0 ? 'text-danger' : 'text-muted'
                       }`}
                     >
                       {b.netBalance > 0 && `+${formatCurrency(b.netBalance)}`}
@@ -142,22 +134,20 @@ function GroupDetail() {
                 ))}
               </div>
 
-              <div className="border-t border-dashed border-line mt-4 pt-4">
-                <p className="text-xs uppercase tracking-wide text-ink/50 font-medium mb-3">
-                  Settle up
-                </p>
+              <div className="border-t border-line mt-4 pt-4">
+                <p className="text-xs font-semibold text-muted mb-3">SETTLE UP</p>
                 {settlements.length === 0 ? (
-                  <p className="text-sm text-settled">Everyone's settled up.</p>
+                  <p className="text-sm text-brand">Everyone's settled up.</p>
                 ) : (
                   <div className="space-y-2">
                     {settlements.map((s, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-sm">
+                      <div key={idx} className="flex justify-between items-center text-sm bg-surface rounded-lg px-3 py-2">
                         <span>
                           <span className="font-medium text-ink">{s.from.name}</span>
-                          <span className="text-ink/40"> → </span>
+                          <span className="text-muted"> → </span>
                           <span className="font-medium text-ink">{s.to.name}</span>
                         </span>
-                        <span className="font-mono font-semibold text-accent">
+                        <span className="font-mono font-semibold text-brand-dark">
                           {formatCurrency(s.amount)}
                         </span>
                       </div>
@@ -167,32 +157,30 @@ function GroupDetail() {
               </div>
             </div>
 
-            {/* Expense list */}
-            <div className="bg-white border border-line rounded-sm p-5">
-              <h2 className="font-display text-lg font-semibold text-ink mb-4">Expenses</h2>
+            {/* Expenses */}
+            <div className="bg-white rounded-xl border border-line p-5">
+              <h2 className="text-sm font-semibold text-ink mb-4">Expenses</h2>
               {expenses.length === 0 ? (
-                <p className="text-sm text-ink/40">Nothing logged yet.</p>
+                <p className="text-sm text-muted">Nothing logged yet.</p>
               ) : (
-                <div className="divide-y divide-line/70">
+                <div className="divide-y divide-line">
                   {expenses.map((exp) => (
                     <div key={exp.id} className="py-3 first:pt-0 last:pb-0 flex justify-between items-center">
                       <div>
                         <p className="text-sm text-ink font-medium">{exp.description}</p>
-                        <p className="text-xs text-ink/40 mt-0.5">
+                        <p className="text-xs text-muted mt-0.5">
                           {exp.paidBy.name} · split {exp.shares.length} ways
                         </p>
                       </div>
-                      <p className="font-mono text-sm font-medium text-ink">
-                        {formatCurrency(exp.amount)}
-                      </p>
+                      <p className="font-mono text-sm font-medium text-ink">{formatCurrency(exp.amount)}</p>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </>
-        )}
-      </main>
+          </div>
+        </>
+      )}
     </div>
   );
 }

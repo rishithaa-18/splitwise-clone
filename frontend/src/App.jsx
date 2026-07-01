@@ -4,6 +4,7 @@ import Signup from './pages/Signup';
 import GroupList from './pages/GroupList';
 import GroupDetail from './pages/GroupDetail';
 import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/Layout';
 
 function App() {
   return (
@@ -11,22 +12,18 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
         <Route
-          path="/groups"
           element={
             <ProtectedRoute>
-              <GroupList />
+              <Layout />
             </ProtectedRoute>
           }
-        />
-        <Route
-          path="/groups/:groupId"
-          element={
-            <ProtectedRoute>
-              <GroupDetail />
-            </ProtectedRoute>
-          }
-        />
+        >
+          <Route path="/groups" element={<GroupList />} />
+          <Route path="/groups/:groupId" element={<GroupDetail />} />
+        </Route>
+
         <Route path="*" element={<Navigate to="/groups" />} />
       </Routes>
     </BrowserRouter>
