@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.routes.js';
 import groupRoutes from './routes/group.routes.js';
+import expenseRoutes from './routes/expense.routes.js';
+import settlementRoutes from './routes/settlement.routes.js';
 
 dotenv.config();
 
@@ -12,6 +14,8 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/expenses', expenseRoutes);
+app.use('/api/settlements', settlementRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Splitwise Clone API is running' });
