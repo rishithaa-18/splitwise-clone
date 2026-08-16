@@ -9,6 +9,16 @@ A full-stack expense-splitting app (a Splitwise clone) built with React, Node.js
 
 ---
 
+## Screenshots
+
+### Dashboard
+![Ledger Dashboard](./screenshots/Screenshot%202026-08-16%20184004.png)
+
+### Groups
+![Ledger Groups](./screenshots/Screenshot%202026-08-16%20183937.png)
+
+---
+
 ## Features
 
 - **Authentication** — secure signup/login with JWT and bcrypt password hashing
